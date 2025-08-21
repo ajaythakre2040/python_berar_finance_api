@@ -1,6 +1,5 @@
 import uuid
 import json
-import jwt
 from django.utils.deprecation import MiddlewareMixin
 from django.urls import resolve, Resolver404
 from auth_system.models import TblUser
@@ -9,14 +8,14 @@ from auth_system.models.login_session import LoginSession
 
 class APILogMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        # Extract token from Authorization header
+        
         auth_header = request.headers.get("Authorization", "")
         token = None
         if auth_header.startswith("Bearer "):
             token = auth_header[7:].strip()
         request._token = token
 
-        # Identify session UUID
+        
         session_uuid = None
         if token:
             try:
@@ -28,16 +27,12 @@ class APILogMiddleware(MiddlewareMixin):
             except Exception as e:
                 print(f"[Middleware] Error fetching session: {e}")
 
-        # Set request UUID
-        if session_uuid:
-            request.uniqid = session_uuid
-        else:
-            request.uniqid = str(uuid.uuid4())
-
+        
+        request.uniqid = session_uuid or str(uuid.uuid4())
         request.session["session_uuid"] = request.uniqid
         request.session.modified = True
 
-        # Parse body data
+        
         try:
             if request.body:
                 request._body_data = json.loads(request.body.decode("utf-8"))
@@ -53,47 +48,38 @@ class APILogMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         try:
-            # Check for double logging based on a unique request ID
             if getattr(request, "_log_saved", False):
                 return response
 
-            # Check if the URL resolves to a known view
             try:
                 resolve(request.path_info)
             except Resolver404:
-                # If the URL doesn't resolve, it's likely a duplicate or an invalid request
                 return response
 
             path = request.path_info
             method = request.method
 
-            # Skip logging for static, admin, health-check endpoints
-            if (
-                path.startswith("/static/")
-                or path.startswith("/admin/")
-                or path == "/health/"
-            ):
+            
+            EXCLUDED_PATHS = ["/admin/", "/static/", "/health/", "/test/"]
+            if any(path.startswith(p) for p in EXCLUDED_PATHS):
                 return response
 
+            
+            if path in ["/auth_system/login/", "/auth_system/logout/"]:
+                app_name = "dedup"
+            elif path.startswith("/auth_system/"):
+                app_name = "auth_system"
+            else:
+                app_name = "dedup"
+
+            
             user = getattr(request, "user", None)
             user_obj = user if user and user.is_authenticated else None
-
             token = request._token
             body_data = getattr(request, "_body_data", {})
             query_params = getattr(request, "_query_params", {})
 
-            app_name = None
-            if path == "/auth_system/login/" or path == "/auth_system/logout/":
-                app_name = "dedup"
-            elif path.startswith("/dedup/"):
-                app_name = "dedup"
-            elif path.startswith("/auth_system/"):
-                app_name = "auth_system"
-
-            if not app_name:
-                return response  # Only log for selected apps
-
-            # Extra logic to determine user (especially during login/logout)
+            
             if not user_obj:
                 if path == "/auth_system/login/":
                     username = body_data.get("username")
@@ -113,7 +99,6 @@ class APILogMiddleware(MiddlewareMixin):
                                 ).first()
                         except Exception:
                             user_obj = None
-
                 elif path == "/auth_system/logout/" and token:
                     try:
                         session = LoginSession.objects.filter(
@@ -124,7 +109,7 @@ class APILogMiddleware(MiddlewareMixin):
                     except Exception as e:
                         print(f"[Middleware] Error fetching logout session user: {e}")
 
-            # On successful login, extract and save the new session UUID from response
+            
             if path == "/auth_system/login/":
                 if (
                     response.status_code == 200
@@ -141,18 +126,18 @@ class APILogMiddleware(MiddlewareMixin):
                     except Exception as e:
                         print(f"[Middleware] Failed to parse login response UUID: {e}")
 
-            # Prepare request data for logging
+            
             if method == "GET" and not query_params:
                 request_data = {"message": "Full data fetched"}
             else:
                 request_data = {**body_data, **query_params}
 
-            # Import the appropriate APILog model
+            
             APILog = self._import_apilog_model(app_name)
             if not APILog:
                 return response
 
-            # Create the log entry
+            
             log_entry = APILog(
                 uniqid=request.uniqid,
                 user=user_obj,
@@ -162,7 +147,7 @@ class APILogMiddleware(MiddlewareMixin):
                 response_status=response.status_code,
             )
 
-            # Add response data if it's JSON
+            
             try:
                 if hasattr(response, "content") and response.get(
                     "Content-Type", ""
@@ -176,7 +161,7 @@ class APILogMiddleware(MiddlewareMixin):
                 log_entry.response_data = None
 
             log_entry.save()
-            request._log_saved = True  # ✅ Prevent duplicate logging
+            request._log_saved = True
 
         except Exception as e:
             print(f"[Middleware] APILog error: {e}")

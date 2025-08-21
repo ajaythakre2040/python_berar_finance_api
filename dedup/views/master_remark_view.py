@@ -5,8 +5,6 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.db import IntegrityError
-
-# from auth_system.permissions.token_valid import IsTokenValid
 from dedup.models import MasterRemark
 from dedup.serializers import MasterRemarkSerializer
 
@@ -72,7 +70,6 @@ class MasterRemarkListCreateView(APIView):
 
 
 class MasterRemarkDetailView(APIView):
-    # permission_classes = [IsAuthenticated, IsTokenValid]
 
     def get_object(self, pk):
         try:

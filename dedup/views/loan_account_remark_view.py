@@ -9,8 +9,7 @@ from dedup.utils.mis_helpers import call_mis_api
 from api_endpoints import CUSTOMER_SEARCH_BY_ADDRESS_URL
 from django.db.models import Q
 from django.utils.timezone import make_aware
-from dedup.serializers.master_remark_serializer import MasterRemarkSerializer
-import re
+
 
 class CustomerByAddressZipcodeView(APIView):
     def post(self, request):
@@ -23,7 +22,6 @@ class CustomerByAddressZipcodeView(APIView):
                     "success": False,
                     "status_code": 400,
                     "message": "Both 'address' and 'zipcode' are required.",
-                    "data": [],
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -33,17 +31,10 @@ class CustomerByAddressZipcodeView(APIView):
                     "success": False,
                     "status_code": 400,
                     "message": "Invalid zipcode. It must be a 6-digit number.",
-                    "data": [],
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        cleaned_address = re.sub(r"[^a-zA-Z0-9\s]", "", address)
-        cleaned_address = re.sub(r"\s+", " ", cleaned_address)  
 
-        # params = {
-        #     "address": cleaned_address.strip(),
-        #     "zipcode": zipcode,
-        # }
         params = {"address": address, "zipcode": zipcode}
         response = call_mis_api(
             request, CUSTOMER_SEARCH_BY_ADDRESS_URL, params=params, timeout=30

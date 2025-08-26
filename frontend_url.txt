@@ -1,7 +1,12 @@
 ==============================
 Base URL:
 ==============================
-http://127.0.0.1:9000/api/
+http://127.0.0.1:9000/
+
+==============================
+Test Endpoint
+==============================
+GET     test/                                 → Test if API is working
 
 ==============================
 Authentication
@@ -16,33 +21,49 @@ Users
 ==============================
 GET     auth_system/users/                  → List all users
 POST    auth_system/users/                  → Create new user
-GET     auth_system/users/<id>/            → Retrieve user by ID
-PATCH   auth_system/users/<id>/            → Update user
-DELETE  auth_system/users/<id>/            → Delete user
+GET     auth_system/users/<id>/             → Retrieve user by ID
+PATCH   auth_system/users/<id>/             → Update user
+DELETE  auth_system/users/<id>/             → Delete user
 
 ==============================
 Menus
 ==============================
-GET     auth_system/menus/                 → List all menus
-POST    auth_system/menus/                 → Create new menu
-GET     auth_system/menus/<id>/            → Retrieve single menu
-PATCH   auth_system/menus/<id>/            → Update menu
-DELETE  auth_system/menus/<id>/            → Delete menu
+GET     auth_system/menus/                  → List all menus
+POST    auth_system/menus/                  → Create new menu
+GET     auth_system/menus/<id>/             → Retrieve single menu
+PATCH   auth_system/menus/<id>/             → Update menu
+DELETE  auth_system/menus/<id>/             → Delete menu
+GET     auth_system/menus/parents/          → Get all parent menus
 
 ==============================
 Roles
 ==============================
-GET     auth_system/roles/                 → List all roles
-POST    auth_system/roles/                 → Create new role
-GET     auth_system/roles/<id>/            → Retrieve role
-PATCH   auth_system/roles/<id>/            → Update role
-DELETE  auth_system/roles/<id>/            → Delete role
+GET     auth_system/roles/                  → List all roles
+POST    auth_system/roles/                  → Create new role
+GET     auth_system/roles/<id>/             → Retrieve role
+PATCH   auth_system/roles/<id>/             → Update role
+DELETE  auth_system/roles/<id>/             → Delete role
 
 ==============================
 Role Permissions
 ==============================
-GET     auth_system/role-permissions/              → List/Create permissions
-POST    auth_system/role-permissions/              → Create permissions
-GET     auth_system/role-permissions/<role_id>/    → Get permissions by role ID
-PATCH   auth_system/role-permissions/<role_id>/    → Update permissions by role ID
-DELETE  auth_system/role-permissions/<role_id>/    → Delete permissions by role ID
+GET     auth_system/role-permissions/               → List all role permissions
+POST    auth_system/role-permissions/               → Create role permissions
+GET     auth_system/role-permissions/<role_id>/     → Get permissions by role ID
+PATCH   auth_system/role-permissions/<role_id>/     → Update permissions by role ID
+DELETE  auth_system/role-permissions/<role_id>/     → Delete permissions by role ID
+
+==============================
+Dedup Endpoints (No /dedup/ prefix used)
+==============================
+POST    customers/search-by-address/                → Search customers by address and zipcode
+POST    loan-account-remarks/                       → Create loan account remark
+GET     loan-account-remarks/                       → Get all loan account remarks
+GET     logs/                                       → Get all dedup logs
+GET     logs/count/                                 → Count of dedup logs
+GET     logs/download-all/                          → Download all logs (without pagination)
+GET     master-remarks/                             → List all master remarks
+POST    master-remarks/                             → Create a master remark
+GET     master-remarks/<id>/                        → Retrieve master remark
+PATCH   master-remarks/<id>/                        → Update master remark
+DELETE  master-remarks/<id>/                        → Delete master remark

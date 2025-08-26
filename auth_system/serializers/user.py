@@ -11,6 +11,7 @@ class TblUserSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "full_name",
+            "role_id",
             "mobile_number",
             "email",
             "is_active",

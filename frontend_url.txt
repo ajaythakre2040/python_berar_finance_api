@@ -1,0 +1,48 @@
+==============================
+Base URL:
+==============================
+http://127.0.0.1:9000/api/
+
+==============================
+Authentication
+==============================
+POST    auth_system/token/                   → Get Token
+POST    auth_system/token/refresh/          → Refresh Token
+POST    auth_system/login/                  → Login
+POST    auth_system/logout/                 → Logout
+
+==============================
+Users
+==============================
+GET     auth_system/users/                  → List all users
+POST    auth_system/users/                  → Create new user
+GET     auth_system/users/<id>/            → Retrieve user by ID
+PATCH   auth_system/users/<id>/            → Update user
+DELETE  auth_system/users/<id>/            → Delete user
+
+==============================
+Menus
+==============================
+GET     auth_system/menus/                 → List all menus
+POST    auth_system/menus/                 → Create new menu
+GET     auth_system/menus/<id>/            → Retrieve single menu
+PATCH   auth_system/menus/<id>/            → Update menu
+DELETE  auth_system/menus/<id>/            → Delete menu
+
+==============================
+Roles
+==============================
+GET     auth_system/roles/                 → List all roles
+POST    auth_system/roles/                 → Create new role
+GET     auth_system/roles/<id>/            → Retrieve role
+PATCH   auth_system/roles/<id>/            → Update role
+DELETE  auth_system/roles/<id>/            → Delete role
+
+==============================
+Role Permissions
+==============================
+GET     auth_system/role-permissions/              → List/Create permissions
+POST    auth_system/role-permissions/              → Create permissions
+GET     auth_system/role-permissions/<role_id>/    → Get permissions by role ID
+PATCH   auth_system/role-permissions/<role_id>/    → Update permissions by role ID
+DELETE  auth_system/role-permissions/<role_id>/    → Delete permissions by role ID

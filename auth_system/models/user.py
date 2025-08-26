@@ -7,7 +7,6 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 
-
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -50,22 +49,14 @@ class TblUser(AbstractBaseUser, PermissionsMixin):
         validators=[mobile_regex],
     )
     email = models.EmailField(unique=True)
-
+    role_id = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     key = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
-    # created_by = models.IntegerField(default=0)
     created_by = models.IntegerField(null=True, blank=True)
 
-    # created_by = models.ForeignKey(
-    #     "self",
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.SET_NULL,
-    #     related_name="created_users",
-    # )
     updated_by = models.IntegerField(null=True, blank=True)
     deleted_by = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -74,8 +65,8 @@ class TblUser(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    USERNAME_FIELD = "email"  
-    REQUIRED_FIELDS = ["mobile_number", "full_name"]  
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["mobile_number", "full_name"]
 
     class Meta:
         db_table = "auth_system_user"

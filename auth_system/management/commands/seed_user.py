@@ -9,7 +9,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         email = ADMIN_USER["email"]
-
+        password = ADMIN_USER["password"]
         if TblUser.objects.filter(email=email).exists():
             self.stdout.write(self.style.WARNING(f"Admin already exists: {email}"))
         else:
@@ -20,4 +20,8 @@ class Command(BaseCommand):
                 password=ADMIN_USER["password"],
                 created_at=timezone.now(),
             )
-            self.stdout.write(self.style.SUCCESS(f"Admin user created: {email}"))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"✅ Admin user created\n📧 Email: {email}\n🔑 Password: {password}"
+                )
+            )

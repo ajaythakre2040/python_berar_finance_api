@@ -32,3 +32,6 @@ dist/
 # Ignore only compiled python files inside migrations but not migrations themselves
 **/migrations/__pycache__/
 **/migrations/*.pyc
+# ✅ Always include Django migration files (except __pycache__)
+!**/migrations/*.py
+!**/migrations/__init__.py

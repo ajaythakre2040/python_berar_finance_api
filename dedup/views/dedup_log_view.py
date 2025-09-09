@@ -15,10 +15,11 @@ class GetAllDedupLogsView(APIView):
         search_query = request.query_params.get("search", "").strip()
         from_date = request.query_params.get("from_date", "").strip()
         to_date = request.query_params.get("to_date", "").strip()
+        unique_id = request.query_params.get("unique_id", "").strip()
 
         logs = APILog.objects.filter(method="POST").exclude(
-            Q(endpoint__iexact="/api/dedup/master-remarks/") |
-            Q(endpoint__iexact="/auth_system/logout/")
+            Q(endpoint__iexact="/api/dedup/master-remarks/")
+            | Q(endpoint__iexact="/auth_system/logout/")
         )
 
         if from_date and to_date:
@@ -41,6 +42,9 @@ class GetAllDedupLogsView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+        if unique_id:
+            logs = logs.filter(uniqid__iexact=unique_id)
+
         if search_query:
             logs = logs.filter(
                 Q(method__icontains=search_query)
@@ -60,6 +64,7 @@ class GetAllDedupLogsView(APIView):
             if logs.exists()
             else "No logs found for the given filters."
         )
+
         return paginator.get_custom_paginated_response(
             data=serializer.data,
             extra_fields={
@@ -96,10 +101,14 @@ class AllDedupLogsWithoutPaginationView(APIView):
     def get(self, request):
         from_date = request.query_params.get("from_date", "").strip()
         to_date = request.query_params.get("to_date", "").strip()
+        unique_id = request.query_params.get("unique_id", "").strip()
 
         logs = APILog.objects.all().order_by("-created_at")
 
-        if from_date and to_date:
+        if unique_id:
+            logs = logs.filter(uniqid=unique_id)
+
+        elif from_date and to_date:
             try:
                 from_dt = make_aware(datetime.strptime(from_date, "%Y-%m-%d"))
                 to_dt = make_aware(
@@ -118,6 +127,17 @@ class AllDedupLogsWithoutPaginationView(APIView):
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+        else:
+            return Response(
+                {
+                    "status": False,
+                    "status_code": status.HTTP_400_BAD_REQUEST,
+                    "message": "Provide either 'unique_id' or both 'from_date' and 'to_date' as query parameters.",
+                    "data": [],
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         serializer = APILogSerializer(logs, many=True)
 

@@ -8,31 +8,14 @@ from auth_system.models.login_session import LoginSession
 
 class APILogMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        
+    # --- Step 1: Authorization Token ---
         auth_header = request.headers.get("Authorization", "")
         token = None
         if auth_header.startswith("Bearer "):
             token = auth_header[7:].strip()
         request._token = token
 
-        
-        session_uuid = None
-        if token:
-            try:
-                session = LoginSession.objects.filter(
-                    token=token, is_active=True
-                ).first()
-                if session:
-                    session_uuid = str(session.session_id or session.pk)
-            except Exception as e:
-                print(f"[Middleware] Error fetching session: {e}")
-
-        
-        request.uniqid = session_uuid or str(uuid.uuid4())
-        request.session["session_uuid"] = request.uniqid
-        request.session.modified = True
-
-        
+        # --- Step 2: Try to load request body ---
         try:
             if request.body:
                 request._body_data = json.loads(request.body.decode("utf-8"))
@@ -41,6 +24,29 @@ class APILogMiddleware(MiddlewareMixin):
         except Exception:
             request._body_data = {}
 
+        # --- Step 3: Get user-provided unique_id from body ---
+        user_provided_unique_id = request._body_data.get("unique_id")
+
+        # --- Step 4: Get session_uuid from token, if available ---
+        session_uuid = None
+        if token:
+            try:
+                session = LoginSession.objects.filter(
+                    token=token, is_active=True
+                ).first()
+                if session:
+                    session_uuid = str(session.pk)  # ✅ FIXED LINE
+            except Exception as e:
+                print(f"[Middleware] Error fetching session: {e}")
+
+        # --- ✅ Step 5: Final priority: user_provided > session_uuid > random UUID ---
+        request.uniqid = user_provided_unique_id or session_uuid or str(uuid.uuid4())
+
+        # --- Step 6: Store in session (if enabled) ---
+        request.session["session_uuid"] = request.uniqid
+        request.session.modified = True
+
+        # --- Step 7: Parse query parameters ---
         request._query_params = _flatten_querydict(
             request.GET,
             exclude_keys=["page", "page_size", "limit", "offset"],

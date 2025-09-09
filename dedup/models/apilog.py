@@ -3,7 +3,7 @@ from auth_system.models import TblUser
 
 
 class APILog(models.Model):
-    uniqid = models.UUIDField(editable=False, db_index=True)
+    uniqid = models.CharField(max_length=100, db_index=True)
     user = models.ForeignKey(
         TblUser,
         on_delete=models.SET_NULL,

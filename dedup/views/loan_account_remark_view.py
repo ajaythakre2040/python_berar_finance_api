@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from auth_system.utils.pagination import CustomPagination
+from dedup.models.apilog import APILog
 from dedup.models.loan_account_remark import LoanAccountRemark
 from dedup.serializers.loan_account_remark_serializer import LoanAccountRemarkSerializer
 from dedup.utils.mis_helpers import call_mis_api
@@ -15,6 +16,32 @@ class CustomerByAddressZipcodeView(APIView):
     def post(self, request):
         address = request.data.get("address")
         zipcode = request.data.get("zipcode")
+        unique_id = request.data.get("unique_id")
+
+        if not unique_id:
+            return Response(
+                {
+                    "success": False,
+                    "status_code": 400,
+                    "message": "'unique_id' is required.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if APILog.objects.filter(
+            uniqid=unique_id,
+            endpoint="/customers/search-by-address/",
+            response_status=200,
+        ).exists():
+            return Response(
+                {
+                    "success": False,
+                    "status_code": 402,
+                    "message": "Duplicate request: this 'unique_id' has already been used.",
+                    "unique_id": unique_id,
+                },
+                status=402,
+            )
 
         if not address or not zipcode:
             return Response(
@@ -25,6 +52,7 @@ class CustomerByAddressZipcodeView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
         if not (isinstance(zipcode, str) and len(zipcode) == 6 and zipcode.isdigit()):
             return Response(
                 {
@@ -36,10 +64,24 @@ class CustomerByAddressZipcodeView(APIView):
             )
 
         params = {"address": address, "zipcode": zipcode}
-        response = call_mis_api(
+        mis_response = call_mis_api(
             request, CUSTOMER_SEARCH_BY_ADDRESS_URL, params=params, timeout=30
         )
-        return response
+
+        if mis_response.status_code != 200:
+            return mis_response
+
+        mis_data = mis_response.data.get("data", {})
+        return Response(
+            {
+                "success": True,
+                "message": mis_data.get("message", "Data retrieved successfully."),
+                "status_code": mis_data.get("status_code", 200),
+                "unique_id": unique_id,
+                "data": mis_data.get("data", []),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class LoanAccountRemarkView(APIView):
@@ -64,11 +106,11 @@ class LoanAccountRemarkView(APIView):
                 return Response(
                     {
                         "success": False,
-                        "status_code": 400,
+                        "status_code": 402,
                         "message": "Duplicate entry: Failed to add loan account remark.",
                         "errors": str(e),
                     },
-                    status=status.HTTP_400_BAD_REQUEST,
+                    status=402,
                 )
 
         return Response(

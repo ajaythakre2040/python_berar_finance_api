@@ -7,6 +7,8 @@ class LoanAccountRemark(models.Model):
     loan_account = models.CharField(max_length=30, db_index=True) 
     loan_id = models.CharField(max_length=30, db_index=True,default=0 )
     remark = models.IntegerField()
+    unique_id = models.CharField(max_length=255, null=False, blank=False)
+
     created_by = models.ForeignKey(
         TblUser, on_delete=models.SET_NULL, null=True, blank=True
     )

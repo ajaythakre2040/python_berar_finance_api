@@ -106,7 +106,7 @@ class AllDedupLogsWithoutPaginationView(APIView):
         logs = APILog.objects.all().order_by("-created_at")
 
         if unique_id:
-            logs = logs.filter(uniqid=unique_id)
+            logs = logs.filter(uniqid=unique_id,method="POST")
 
         elif from_date and to_date:
             try:
@@ -116,7 +116,7 @@ class AllDedupLogsWithoutPaginationView(APIView):
                     + timedelta(days=1)
                     - timedelta(microseconds=1)
                 )
-                logs = logs.filter(created_at__range=(from_dt, to_dt))
+                logs = logs.filter(created_at__range=(from_dt, to_dt),method="POST")
             except ValueError:
                 return Response(
                     {
